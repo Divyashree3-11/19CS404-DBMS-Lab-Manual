@@ -34,7 +34,7 @@ END;
 - Use an `IF` statement to compare the values.
 - Display the greater number using `DBMS_OUTPUT.PUT_LINE`.
   
-**PLSQL query:**
+**PL/SQL query:**
 ```
 DECLARE
    num1 INTEGER := 45; 
