@@ -30,8 +30,41 @@ END;
 - Create two tables: `employees` (for storing data) and `employee_log` (for logging the inserts).
 - Write an **AFTER INSERT** trigger on the `employees` table to log the new data into the `employee_log` table.
 
+**PL/SQL query:**
+```
+create table employees11(
+ employee_id INT primary key,
+ first_name VARCHAR(50),
+ dept_no INT,
+ salary DECIMAL(10,2)
+ );
+ create table employee_log(
+   log_id INT AUTO_INCREMENT primary key,
+   employee_id INT,
+   first_name VARCHAR(50),
+   dept_no INT,
+   salary DECIMAL(10,2),
+   log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   );
+   DELIMITER $$
+   create trigger trg_log_employee_insert
+   AFTER INSERT ON employees11
+   FOR EACH ROW
+   BEGIN
+      Insert into employee_log(employee_id,first_name,dept_no,salary)
+      values(New.employee_id,new.first_name,new.dept_no,new.salary);
+  END$$
+  DELIMITER ;
+  INSERT INTO employees11(employee_id,first_name,dept_no,salary)
+  values(1,'Alice',10,5000.00);
+  select * from employee_log;
+```
 **Expected Output:**
 - A new entry is added to the `employee_log` table each time a new record is inserted into the `employees` table.
+
+**Output:**
+
+![image](https://github.com/user-attachments/assets/7d12feda-20aa-4c84-b1c8-e24a246ca428)
 
 ---
 
@@ -40,8 +73,31 @@ END;
 - Write a **BEFORE DELETE** trigger on the `sensitive_data` table.
 - Use `RAISE_APPLICATION_ERROR` to prevent deletion and issue a custom error message.
 
+**PL/SQL query:**
+```
+create table sensitive_data(
+    record_id INT primary key,
+    info varchar(50)
+    );
+    DELIMITER $$
+    create trigger trg_prevent_delete_sensitive
+    BEFORE delete on sensitive_data
+    FOR EACH ROW
+    BEGIN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TExT = 'ERROR:DELETION not allowed in this table';
+END$$
+DELIMITER ;
+Insert INTO sensitive_data(record_id,info) values (1,'Top secret');
+DELETE FROM sensitive_data where record_id=1;
+```
+
 **Expected Output:**
 - If an attempt is made to delete a record from `sensitive_data`, an error message is raised, e.g., `ERROR: Deletion not allowed on this table.`
+
+**Output:**
+
+![image](https://github.com/user-attachments/assets/f08d5c42-35d1-4210-be6c-f5261c319a91)
 
 ---
 
@@ -50,8 +106,14 @@ END;
 - Add a `last_modified` column to the `products` table.
 - Write a **BEFORE UPDATE** trigger on the `products` table to set the `last_modified` column to the current timestamp whenever an update occurs.
 
+**PL/SQL query:**
+`
 **Expected Output:**
 - The `last_modified` column in the `products` table is updated automatically to the current date and time when any record is updated.
+
+**Output:**
+
+
 
 ---
 
@@ -60,8 +122,45 @@ END;
 - Create an `audit_log` table with a counter column.
 - Write an **AFTER UPDATE** trigger on the `customer_orders` table to increment the counter in the `audit_log` table every time a record is updated.
 
+**PL/SQL query:**
+```
+CREATE TABLE customer_orders (
+order_id INT PRIMARY KEY,
+customer_name VARCHAR(100),
+order_amount DECIMAL(10,2)
+);
+CREATE TABLE audit_log (
+id INT PRIMARY KEY,
+update_count INT DEFAULT 0
+);
+INSERT INTO audit_log (id, update_count) VALUES (1,0);
+DELIMITER $$
+CREATE TRIGGER trg_track_updates
+AFTER UPDATE ON customer_orders
+FOR EACH ROW
+BEGIN
+UPDATE audit_log
+SET update_count = update_count + 1
+WHERE id = 1;
+END$$
+DELIMITER ;
+INSERT INTO customer_orders(order_id,customer_name,order_amount)
+values(100,'Doe',150.00);
+UPDATE customer_orders
+SET order_amount = 200.00
+WHERE order_id = 100;
+UPDATE customer_orders
+SET order_amount = 400.00
+WHERE order_id = 100;
+SELECT * FROM audit_log;
+```
+
 **Expected Output:**
 - The `audit_log` table will maintain a count of how many updates have been made to the `customer_orders` table.
+
+**Output:**
+
+![image](https://github.com/user-attachments/assets/100fd565-cd55-497c-98c5-422fd1603a75)
 
 ---
 
