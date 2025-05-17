@@ -107,12 +107,50 @@ DELETE FROM sensitive_data where record_id=1;
 - Write a **BEFORE UPDATE** trigger on the `products` table to set the `last_modified` column to the current timestamp whenever an update occurs.
 
 **PL/SQL query:**
-`
+```
+CREATE TABLE products 
+(
+    product_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    price NUMERIC(10, 2),
+    stock_quantity INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_modified TIMESTAMP
+);
+DELIMITER $$
+
+    CREATE TRIGGER trg_set_last_modified
+    BEFORE UPDATE ON products
+    FOR EACH ROW
+    BEGIN
+        SET NEW.last_modified = CURRENT_TIMESTAMP;
+    END$$
+
+DELIMITER ;
+
+INSERT INTO products (name, description, price, stock_quantity)
+VALUES 
+('Wireless Mouse', 'Ergonomic wireless mouse with USB receiver', 25.99, 100),
+('Mechanical Keyboard', 'RGB backlit mechanical keyboard', 59.99, 50),
+('HD Monitor', '24-inch Full HD LED monitor', 149.99, 30);
+
+UPDATE products SET price = 27.99 WHERE product_id = 1;
+UPDATE products SET name = 'Key Board '  WHERE product_id = 2;
+UPDATE products SET stock_quantity = 40 WHERE product_id = 3;
+
+SELECT product_id, name, created_at, last_modified FROM products;
 **Expected Output:**
 - The `last_modified` column in the `products` table is updated automatically to the current date and time when any record is updated.
-
+```
 **Output:**
+Before Updating the record:
 
+![image](https://github.com/user-attachments/assets/abd98efa-fe08-4cbc-8434-8ea886c3360f)
+
+After updating the record:
+
+![image](https://github.com/user-attachments/assets/490136a2-5eaf-4419-937a-a0b7b89d8e10)
 
 
 ---
@@ -169,8 +207,42 @@ SELECT * FROM audit_log;
 - Write a **BEFORE INSERT** trigger on the `employees` table to check if the inserted salary meets a specific condition (e.g., salary must be greater than 3000).
 - If the condition is not met, raise an error to prevent the insert.
 
+**PL/SQL query:**
+```
+CREATE TABLE employee6 
+(
+    employee_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    dept_no INT,
+    salary DECIMAL(10,2)
+);
+
+DELIMITER $$
+
+        CREATE TRIGGER trg_check_salary_before_insert2
+        BEFORE INSERT ON employee6
+        FOR EACH ROW
+        BEGIN
+            IF NEW.salary < 3000 THEN
+                SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'ERROR: Salary Below Minimum Threshold.';
+            END IF;
+        END$$
+
+DELIMITER ;
+
+INSERT INTO employee6(employee_id, first_name, dept_no, salary) VALUES (1, 'Bob', 20, 299.00);
+```
+
 **Expected Output:**
 - If the inserted salary in the `employees` table is below the condition (e.g., salary < 3000), the insert operation is blocked, and an error message is raised, such as: `ERROR: Salary below minimum threshold.`
+
+**Output:**
+
+If the inserted salary in the employees table is below the condition (e.g., salary < 3000), the insert operation is blocked, and an error message is raised, such as: ERROR: Salary below minimum threshold.
+
+![image](https://github.com/user-attachments/assets/e5006bf2-1b29-4d82-b409-3e7fb47582ab)
+
 
 ## RESULT
 Thus, the PL/SQL trigger programs were written and executed successfully.
